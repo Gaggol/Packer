@@ -39,23 +39,28 @@ namespace CustomPacker
             PackedData currentPackedData = new PackedData();
             byte[] data = Array.Empty<byte>();
 
+            int spaceHits = 0;
+            int endHits = 0;
+
             try {
                 int contentSize = 0;
 
                 for(int i = 0; i < byteArray.Length; i++) {
                     if(byteArray[i] == 0x00 && byteArray[i + 1] == 0x47 && byteArray[i+2] == 0x47 && byteArray[i+3] == 0x00) {
+                        i = i + 3;
+                        spaceHits += 1;
                         switch(currentPart) {
                             case DataPart.Name:
                                 currentPart = DataPart.SizeOfContent;
-                                i = i + 3;
                                 continue;
                             case DataPart.SizeOfContent:
                                 currentPart = DataPart.Content;
-                                i = i + 3;
                                 continue;
                         }
                     }
+                    
                     if(byteArray[i] == 0x47 && byteArray[i + 1] == 0x41 && byteArray[i + 2] == 0x47 && byteArray[i + 3] == 0x47 && byteArray[i + 4] == 0x4F && byteArray[i + 5] == 0x4C && byteArray[i + 6] == 0x00) {
+                        endHits += 1;
                         currentPart = DataPart.Name;
 
                         PackedData[] _pd = new PackedData[packedDatas.Length + 1];
@@ -65,7 +70,13 @@ namespace CustomPacker
 
                         currentPackedData = new PackedData();
 
-                        i = i + 6;
+                        i = i + 7;
+
+                        byte[] removeRead = new byte[byteArray.Length - i];
+                        Array.Copy(byteArray, i, removeRead, 0, byteArray.Length - i);
+                        byteArray = removeRead;
+                        i = -1;
+
                         continue;
                     }
 
@@ -78,7 +89,7 @@ namespace CustomPacker
                                 contentSize = BitConverter.ToInt32(data);
                                 data = new byte[contentSize];
                                 Array.Copy(byteArray, i, data, 0, contentSize);
-                                i = i + contentSize;
+                                i = i + contentSize-1;
                                 currentPackedData.FileContent = data;
 
                                 data = Array.Empty<byte>();
@@ -95,6 +106,9 @@ namespace CustomPacker
                     
                     prevPart = currentPart;
                 }
+
+                Console.WriteLine($"space: {spaceHits} end: {endHits}");
+
             } catch(IndexOutOfRangeException) {
                 Console.WriteLine("Reached End - (Corrupted Packed File)");
                 return packedDatas;

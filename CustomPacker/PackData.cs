@@ -43,6 +43,7 @@ namespace CustomPacker
                     cts.Cancel();
                 }
 
+
                 bool firstFile = true;
 
                 foreach(var byteArray in fileByteArray) {
@@ -90,11 +91,10 @@ namespace CustomPacker
         }
 
         static byte[] CombineByteArrays(byte[] a, byte[] b) {
-
             byte[] _ = new byte[a.Length + b.Length];
-            a.CopyTo(_, 0);
-            b.CopyTo(_, a.Length);
 
+            Array.Copy(a, 0, _, 0, a.Length);
+            Array.Copy(b, 0, _, a.Length, b.Length);
             return _;
         }
     }
