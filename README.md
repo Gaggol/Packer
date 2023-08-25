@@ -1,1 +1,1 @@
-# A packer and unpacker, with a loss rate of 50%
+# A packer and unpacker
