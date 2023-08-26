@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CustomPacker
 {
-    public struct PackedData {
+    internal struct PackedData {
         public string FileName;
         public byte[] FileContent;
 
@@ -16,23 +16,14 @@ namespace CustomPacker
         }
     }
 
-    public static class UnpackData {
+    internal static class UnpackData {
         private enum DataPart {
             Name,
             SizeOfContent,
             Content
         }
 
-        public static Task SaveFile(PackedData data) {
-            Console.WriteLine(data.FileName);
-            Directory.CreateDirectory("./progTest/");
-            using(FileStream fs = File.Create("./progTest/" + data.FileName)) {
-                fs.Write(data.FileContent);
-            }
-            return Task.CompletedTask;
-        }
-
-        public static PackedData[] Unpack(byte[] byteArray) {
+        internal static PackedData[] Unpack(byte[] byteArray) {
             DataPart currentPart = DataPart.Name;
             DataPart prevPart = DataPart.Name;
             PackedData[] packedDatas = Array.Empty<PackedData>();
@@ -44,6 +35,7 @@ namespace CustomPacker
 
             try {
                 int contentSize = 0;
+
 
                 for(int i = 0; i < byteArray.Length; i++) {
                     if(byteArray[i] == 0x00 && byteArray[i + 1] == 0x47 && byteArray[i+2] == 0x47 && byteArray[i+3] == 0x00) {
@@ -106,14 +98,9 @@ namespace CustomPacker
                     
                     prevPart = currentPart;
                 }
-
-                Console.WriteLine($"space: {spaceHits} end: {endHits}");
-
             } catch(IndexOutOfRangeException) {
-                Console.WriteLine("Reached End - (Corrupted Packed File)");
                 return packedDatas;
             }
-            Console.WriteLine("Reached End");
             return packedDatas;
         }
     }

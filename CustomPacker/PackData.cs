@@ -7,15 +7,13 @@ using System.Threading.Tasks;
 
 namespace CustomPacker
 {
-    public static class PackData
+    internal static class PackData
     {
-        //NAME SPACE SIZE SPACE CONTENT SPACE END
+        //NAME SPACE SIZE SPACE CONTENT END
 
-        static byte[] endBytes = new byte[] { 0x47, 0x41, 0x47, 0x47, 0x4F, 0x4C, 0x00 };
-        static byte[] spaceBytes = new byte[] { 0x00, 0x47, 0x47, 0x00 };
-        static ConcurrentBag<byte[]> fileByteArray = new ConcurrentBag<byte[]>();
+        readonly static ConcurrentBag<byte[]> fileByteArray = new ConcurrentBag<byte[]>();
 
-        public static void Pack(string DirPath) {
+        internal static byte[] Pack(string DirPath) {
             if(Directory.Exists(DirPath)) {
                 string[] files = Directory.GetFiles(DirPath);
 
@@ -54,8 +52,9 @@ namespace CustomPacker
                         toWrite = CombineByteArrays(toWrite, byteArray);
                     }
                 }
-                File.WriteAllBytes("data", toWrite);
+                return toWrite;
             }
+            return Array.Empty<byte>();
         }
 
         static Task ReadFile(string fileName) {
@@ -63,27 +62,14 @@ namespace CustomPacker
                 byte[] content = File.ReadAllBytes(fileName);
                 byte[] name = Encoding.UTF8.GetBytes(Path.GetFileName(fileName));
                 byte[] sizeOfContent = BitConverter.GetBytes(content.Length);
+                byte[] combined = Array.Empty<byte>();
 
-                byte[] combined = new byte[endBytes.Length + spaceBytes.Length + sizeOfContent.Length + spaceBytes.Length + name.Length + content.Length];
-
-                int length = 0;
-
-                name.CopyTo(combined, length);
-                length += name.Length;
-
-                spaceBytes.CopyTo(combined, length);
-                length += spaceBytes.Length;
-
-                sizeOfContent.CopyTo(combined, length);
-                length += sizeOfContent.Length;
-
-                spaceBytes.CopyTo(combined, length);
-                length += spaceBytes.Length;
-
-                content.CopyTo(combined, length);
-                length += content.Length;
-
-                endBytes.CopyTo(combined, length);
+                combined = CombineByteArrays(combined, name);
+                combined = CombineByteArrays(combined, Program.SpaceBytes);
+                combined = CombineByteArrays(combined, sizeOfContent);
+                combined = CombineByteArrays(combined, Program.SpaceBytes);
+                combined = CombineByteArrays(combined, content);
+                combined = CombineByteArrays(combined, Program.EndBytes);
 
                 fileByteArray.Add(combined);
             }
